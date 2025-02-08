@@ -44,7 +44,7 @@ for (j in 1:length(n)){
   set.seed(123)
   for (i in 1:R){
     X=rnorm(n[i],mu)
-    t=mean(X)*sqrt(20)/sd(X)
+    t=mean(X)*sqrt(n[j])/sd(X)
     c=qnorm(.95,mean=mu)                            
     vect[i]=ifelse(t>c,1,0)
   }

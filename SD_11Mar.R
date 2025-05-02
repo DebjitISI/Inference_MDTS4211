@@ -1,24 +1,10 @@
 
 
-library(lmtest)
 
 
-# Generate sample data
 set.seed(123)
-x <- rnorm(20)
-y <-rpois(20,lambda=1)
 
-# Fit two nested models
-model1 <- lm(y ~ x)
-model2 <- lm(y ~ 1)  # Reduced model (intercept only)
-
-# Perform the Wald test
-waldtest(model1, model2)
-lrtest(model1,model2)
-
-
-
-
+### Wald test
 # Generate random data
 x <- rnorm(20)
 
@@ -86,5 +72,3 @@ p_value <- 1 - pchisq(S, df = 1)
 # Print results
 cat("Score Statistic:", S, "\n")
 cat("P-value:", p_value, "\n")
-
-

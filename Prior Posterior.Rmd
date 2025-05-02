@@ -1,0 +1,169 @@
+---
+title: "BDA problem set"
+author: "Pradip Hazra (413)"
+date: "2025-04-08"
+output: word_document
+---
+
+##### 1. Suppose you have observed a coin flip experiment with the following results: 12 heads and 8 tails. Assume a Beta(2,2) prior for the probability of heads. Use the Beta-Binomial model to obtain the posterior distribution, posterior mean, and a 95% credible interval for the probability of heads.
+
+```{r}
+# Prior parameters for Beta distribution
+alpha_prior <- 2
+beta_prior <- 2
+
+# Observed data (12 heads, 8 tails)
+x <- 12  # number of heads
+n <- 20  # total flips (12 heads + 8 tails)
+
+# Posterior parameters for Beta distribution
+alpha_post <- alpha_prior + x
+beta_post <- beta_prior + (n - x)
+
+# Display the posterior parameters
+cat("Posterior parameters:\n")
+cat("Alpha: ", alpha_post, "\n")
+cat("Beta: ", beta_post, "\n")
+
+# Posterior mean
+posterior_mean <- alpha_post / (alpha_post + beta_post)
+cat("Posterior mean: ", posterior_mean, "\n")
+
+# 95% credible interval (2.5th and 97.5th percentiles)
+credible_interval <- qbeta(c(0.025, 0.975), alpha_post, beta_post)
+cat("95% credible interval: [", credible_interval[1], ", ", credible_interval[2], "]\n")
+
+# Optional: plot the posterior Beta distribution using plot function
+x_values <- seq(0, 1, length.out = 200) # Generate a sequence of x values
+y_values <- dbeta(x_values, alpha_post, beta_post) # Calculate the density for each x
+
+plot(x_values, y_values,
+     type = "l", # "l" for line plot
+     main = "Posterior Beta Distribution",
+     xlab = "Probability of heads (θ)",
+     ylab = "Density")
+
+# Add posterior mean line
+abline(v = posterior_mean, col = "red", lty = 2)
+
+# Add credible interval lines
+abline(v = credible_interval[1], col = "blue", lty = 3)
+abline(v = credible_interval[2], col = "blue", lty = 3)
+
+# Add legend
+legend("topright",
+       legend = c("Posterior Density", "Posterior Mean", "95% Credible Interval"),
+       col = c("black", "red", "blue"),
+       lty = c(1, 2, 3))
+```
+##### 4. A call center records customer complaints daily:
+(3,2,5,1,4,3,2,6,5,2)(3, 2, 5, 1, 4, 3, 2, 6, 5, 2)
+Assume a Gamma(2,1) prior for the complaint rate. Compute the posterior distribution, posterior mean, and a 95% credible interval for the complaint rate.
+
+```{r}
+# Given data
+complaints <- c(3, 2, 5, 1, 4, 3, 2, 6, 5, 2)
+
+# Prior parameters (Gamma(2, 1))
+alpha_0 <- 2
+beta_0 <- 1
+
+# Sufficient statistics (sum of complaints and number of observations)
+n <- length(complaints)
+sum_complaints <- sum(complaints)
+
+# Posterior parameters
+alpha_post <- alpha_0 + sum_complaints
+beta_post <- beta_0 + n
+
+# Posterior mean
+posterior_mean <- alpha_post / beta_post
+
+# 95% credible interval (using quantile function of the Gamma distribution)
+credible_interval <- qgamma(c(0.025, 0.975), shape = alpha_post, rate = beta_post)
+
+# Results
+cat("Posterior mean: ", posterior_mean, "\n")
+cat("95% credible interval: (", credible_interval[1], ", ", credible_interval[2], ")\n")
+
+# Plot the posterior distribution
+# Define a range of lambda values for plotting
+lambda_values <- seq(0, 10, by = 0.01)
+
+# Compute the Gamma density for each lambda value
+posterior_density <- dgamma(lambda_values, shape = alpha_post, rate = beta_post)
+
+# Plot the posterior distribution
+plot(lambda_values, posterior_density, type = "l", lwd = 2, col = "blue", 
+     main = "Posterior Distribution of Complaint Rate (Lambda)",
+     xlab = "Complaint Rate (Lambda)", ylab = "Density", 
+     ylim = c(0, max(posterior_density) * 1.1))
+abline(v = posterior_mean, col = "red", lty = 2) # Add vertical line for posterior mean
+abline(v = credible_interval, col = "green", lty = 2) # Add vertical lines for credible interval
+
+# Add a legend
+legend("topright", legend = c("Posterior Density", 
+                              paste("Posterior Mean =", round(posterior_mean, 2)), 
+                              paste("95% CI: (", round(credible_interval[1], 2), ",", round(credible_interval[2], 2), ")")),
+       col = c("blue", "red", "green"), lty = c(1, 2, 2), lwd = c(2, 1, 1))
+
+```
+
+##### 7. Given a dataset of student test scores:
+(56,60,58,62,59,55,61,63,57,60) 
+Assume a Normal prior N(60, ) and a known variance of 4. Compute the posterior distribution for the mean, the posterior mean, and a 95% credible interval.
+
+```{r}
+# Given data
+data <- c(56, 60, 58, 62, 59, 55, 61, 63, 57, 60)
+n <- length(data)
+mean_data <- mean(data)
+
+# Prior parameters
+prior_mean <- 60
+prior_variance <- 4
+prior_sd <- sqrt(prior_variance)
+
+# Known variance of the data distribution
+likelihood_variance <- 4
+likelihood_sd <- sqrt(likelihood_variance)
+
+# Calculate posterior parameters for the mean
+posterior_mean <- (prior_mean * (n / likelihood_variance) + mean_data * (1 / prior_variance)) /
+                  ((n / likelihood_variance) + (1 / prior_variance))
+posterior_variance <- 1 / ((n / likelihood_variance) + (1 / prior_variance))
+posterior_sd <- sqrt(posterior_variance)
+
+# Calculate the 95% credible interval
+alpha <- 0.05
+credible_interval <- posterior_mean + c(-1, 1) * qnorm(1 - alpha / 2) * posterior_sd
+
+# R code to draw only the posterior curve
+
+# Define a range of values for the mean around the posterior mean
+mu_values_posterior <- seq(posterior_mean - 3 * posterior_sd, posterior_mean + 3 * posterior_sd, length.out = 200)
+
+# Calculate posterior density
+posterior_density <- dnorm(mu_values_posterior, mean = posterior_mean, sd = posterior_sd)
+
+# Plot the posterior curve
+plot(mu_values_posterior, posterior_density, type = "l", col = "red",
+     xlab = "Mean (μ)", ylab = "Posterior Density",
+     main = "Posterior Distribution for the Mean")
+
+# Add a vertical line for the posterior mean
+abline(v = posterior_mean, col = "red", lty = 2)
+
+# Add vertical lines for the credible interval
+abline(v = credible_interval[1], col = "red", lty = 3)
+abline(v = credible_interval[2], col = "red", lty = 3)
+
+# Add a legend
+legend("topright",
+       legend = c("Posterior Density", "Posterior Mean", "95% Credible Interval"),
+       col = c("red", "red", "red"),
+       lty = c(1, 2, 3))
+```
+
+
+

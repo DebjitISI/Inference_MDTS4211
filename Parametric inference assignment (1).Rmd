@@ -1,0 +1,189 @@
+---
+title: "Parametric Inference"
+author: "ARKADYUTI PAUL(432)"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+1.	A six faced die was thrown 300 times and the number of points obtained at each throw was recorded. Use this data to test whether the die was unbiased.
+No. of points per throw:     1    2    3    4    5    6
+Frequency:                   31   52   46   40   54   77.
+
+
+```{r}
+p = 1/6
+x = c(1, 2, 3, 4, 5, 6, 7)
+f = c(31, 52, 46, 40, 54, 77)
+n = sum(f)
+```
+
+calculation for chisq statistic:
+
+```{r}
+ch_stat = sum((f - n*p)^2 /(n*p)); ch_stat
+chisq = qchisq(0.95,5) ; chisq
+
+chisq.test(f,p=rep(1/length(f),length(f)))
+```
+
+
+2.	The following table gives the number of weed seeds in 196 half kg packets of a variety of pulses. Fit an appropriate distribution and test for the goodness of fit.
+No. of weed seeds:      0     1     2     3     4     5    6    7     8     9    10 or more
+Observed frequency:     7     33    54    37    34    16   8    5     1     1         0
+
+```{r}
+x2 = c(0 ,1 ,2 ,3 ,4 ,5 ,6 ,7 ,8 ,9 ,10)
+f2 = c(7, 33, 54, 37, 34, 16, 8, 5, 1, 1, 0)
+n1 = sum(f2)
+```
+
+Calculating test statistic:
+```{r}
+lambda = sum(0:10 * f2)/n1
+p = c(dpois(0:9,lambda),(1-sum(dpois(0:9,lambda))))
+expected = p * n1
+chisq.test(x = f2, p = expected/sum(expected))
+```
+
+
+3.	1072 schoolboys were classified according to intelligence and at the same time their economic conditions are recorded. The results are shown in the following table. Judge whether there is any association between intelligence and economic conditions.
+                                 Intelligence
+Economic Conditions    Excellent    Good    Mediocre     Dull                     
+       Good                48        199      181          82
+       Not Good            81        185      190         106
+```{r}
+# Create a contingency table
+data_mat = matrix(c(48,199,181,82,
+                    81,185,190,106),
+                  nrow = 2, byrow = T) ; data_mat
+
+# Perform Chi-Square Test of Independence
+chisq.test(data_mat)
+```
+
+
+4. 88 residents of an Indian city who were interviewed during a sample survey are classified below as male or female and also as drinkers or non-drinkers of tea. Do these data reveal any association between sex and drinking of tea.
+                 Male Female
+Drink Tea         40   33
+Do not drink tea  3    12
+```{r}
+# Create a contingency table
+data = matrix(c(40, 33, 3, 12), 
+               nrow = 2, byrow = TRUE)
+
+# Perform Chi-Square Test of Independence
+chisq.test(data)
+```
+
+
+5. There are two sections in a class, having 120 and 100 pupils respectively. The following table gives their results in the half-yearly and annual examinations.
+Section I                             Section II
+Annual Exam / Half yearly exam        Annual Exam / Half yearly exam
+        Passed Failed                              Passed Failed
+Passed   48     12                    Passed        21      8
+Failed    8     52                    Failed         6     65
+
+a. For each section test if the annual exam results have any association with the results of the half-yearly exams.
+```{r}
+data_a = matrix(c(48, 12, 8, 52), 
+                 nrow = 2, byrow = TRUE)
+
+chisq.test(data_a)
+```
+```{r}
+data_b = matrix(c(21, 8, 6, 65), 
+                  nrow = 2, byrow = TRUE)
+
+chisq.test(data_b)
+```
+
+b. Test whether the two sections may be regarded as random samples from the same population.
+```{r}
+# Combine both sections into one table
+data_combined = matrix(c(48, 12, 8, 52, 
+                          21, 8, 6, 65), 
+                        nrow = 4, byrow = TRUE)
+
+# Perform Chi-Square Test
+chisq.test(data_combined)
+```
+
+
+6. 1000 families are classified according to sex and colour-blindness.
+                Male  Female
+Normal          442    514
+Colour-Blind     38      6.
+
+According to a genetic model, this distribution should have the following relative frequency distribution where q = 1-p, is the proportion of colour blind individuals in the population.
+                Male       Female
+Normal          p/2      p^2/2 + pq
+Colour-Blind    q/2        q^2/2
+
+Is the data consistent with the model?
+
+```{r}
+# Given observed values
+observed = matrix(c(442, 514, 38, 6), nrow = 2, byrow = TRUE)
+
+ll_function <- expression (
+  442 * log(p / 2) +
+    514 * log(p^2 / 2 + p * (1 - p)) +
+    38 * log((1 - p) / 2) +
+    6 * log((1 - p)^2 / 2))
+
+dL_dp <- function(p) {
+  if (p <= 0 || p >= 1) {
+    return(NA) # Avoid division by zero or undefined behavior at boundaries
+  }
+  442 * (1 / (p)) + 514 * ((p + 1 - 2 * p) / (p^2 / 2 + p - p^2)) -
+    38 * (1 / (1 - p)) - 6 * ((1 - p) / ((1 - p)^2 / 2))
+}
+p=uniroot(dL_dp, interval = c(0 + .Machine$double.eps, 1 - .Machine$double.eps))$root
+p
+q=1-p
+# Expected values using the given model
+expected = matrix(c(p/2, (p^2/2 + p*q), q/2, (q^2/2)), nrow = 2, byrow = TRUE) * 1000
+
+# Perform Chi-Square Goodness-of-Fit Test
+chisq.test(observed, p = expected / 1000)
+
+```
+
+7. The breakdowns occurring during a year for each of 4 machines in factory are classified as follows according to shift, there being 3 shifts daily. Judge whether the differences among the four distributions may be attributed to sampling fluctuations alone.
+Shift   Machine 1   Machine 2   Machine 3   Machine 4
+  1       15           9          18          20
+  2       16          18          29          31
+  3       19          15          19          27
+```{r}
+# Create the breakdown data as a matrix
+breakdowns <- matrix(c(
+  15, 9, 18, 20,
+  16, 18, 29, 31,
+  19, 15, 19, 27
+), nrow = 3, byrow = TRUE)
+
+# Add row and column names for clarity
+rownames(breakdowns) <- c("Shift 1", "Shift 2", "Shift 3")
+colnames(breakdowns) <- c("Machine 1", "Machine 2", "Machine 3", "Machine 4")
+
+# Display the table
+print(breakdowns)
+
+# Perform the Chi-square test
+test_result <- chisq.test(breakdowns)
+
+# Show the test result
+print(test_result)
+
+
+```
+
+
+
+
+
+
+
+
+
+
